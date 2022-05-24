@@ -1,4 +1,3 @@
-import logging
 import argparse
 import requests
 import time
@@ -76,7 +75,7 @@ if __name__ == '__main__':
     # print(f'sc: {results.prettify()}')
     # result.wait()
 
-    
+
     img_data = requests.get("https://itblog21.ru/wp-content/uploads/2020/02/jpg_jpeg01.jpg").content
     with open('test.jpg', 'wb') as handler:
          handler.write(img_data)

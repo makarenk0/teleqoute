@@ -1,8 +1,9 @@
 import argparse
 import requests
 import time
+import os, glob, random
 from bs4 import BeautifulSoup
-
+from icrawler.builtin import GoogleImageCrawler
 
 from telegram.client import Telegram
 
@@ -20,7 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('api_hash', help='API hash')
     parser.add_argument('phone', help='Phone')
     parser.add_argument('chat_id', help='Chat id', type=int)
-    parser.add_argument('text', help='Message text')
+    parser.add_argument('time_range', help='Duration in hours', type=int)
     args = parser.parse_args()
 
     tg = Telegram(
@@ -40,67 +41,73 @@ if __name__ == '__main__':
     # You can wait for a result with the blocking `wait` method.
     result.wait()
 
-    # if result.error:
-    #     print(f'get chats error: {result.error_info}')
-    # else:
-    #     print(f'chats: {result.update}')
+    if result.error:
+        print(f'get chats error: {result.error_info}')
+    else:
+        print(f'chats: {result.update}')
 
 
-    # URL = "https://citaty.info/movie/betmen-nachalo-batman-begins"
-    # page = requests.get(URL)
-    # soup = BeautifulSoup(page.content, "html.parser")
-    # results = soup.find("div", {"class":"view-content"})
-    # qoutes_elements = results.find_all("p")
-    # for qoutes_element in qoutes_elements:
-    #     print(qoutes_element.text + '\n')
-        # result = tg.send_message(
-        #     chat_id=args.chat_id,
-        #     text=qoutes_element.text,
-        # )
-    # job_elements = results.find_all("div", class_="card-content")
-    # for job_element in job_elements:
-    #     title_element = job_element.find("h2", class_="title")
-    #     company_element = job_element.find("h3", class_="company")
-    #     location_element = job_element.find("p", class_="location")
-
-    #     result = tg.send_message(
-    #         chat_id=args.chat_id,
-    #         text=title_element.text.strip(),
-    #     )
-    #     print(title_element.text.strip())
-    #     print(company_element.text.strip())
-    #     print(location_element.text.strip())
-    #     print()
+    qouteURLs = ["https://citaty.info/movie/betmen-nachalo-batman-begins?page=2", "https://citaty.info/movie/betmen-nachalo-batman-begins", "https://citaty.info/movie/betmen-nachalo-batman-begins?page=1",
+    "https://citaty.info/movie/temnyi-rycar-the-dark-knight", "https://citaty.info/movie/temnyi-rycar-the-dark-knight?page=1", "https://citaty.info/movie/temnyi-rycar-the-dark-knight?page=2", "https://citaty.info/movie/temnyi-rycar-the-dark-knight?page=3", 
+    "https://citaty.info/movie/temnyi-rycar-vozrozhdenie-legendy-the-dark-knight-rises", "https://citaty.info/movie/temnyi-rycar-vozrozhdenie-legendy-the-dark-knight-rises?page=1", "https://citaty.info/movie/temnyi-rycar-vozrozhdenie-legendy-the-dark-knight-rises?page=2"]
     
-    # print(f'sc: {results.prettify()}')
-    # result.wait()
+    for URL in qouteURLs:
+        parsedQoutes = []
 
+        page = requests.get(URL)
+        soup = BeautifulSoup(page.content, "html.parser")
+        qoute_blocks = soup.find("div", {"class":"view-content"}).find_all("div", {"class": "quotes-row"})
 
-    img_data = requests.get("https://itblog21.ru/wp-content/uploads/2020/02/jpg_jpeg01.jpg").content
-    with open('test.jpg', 'wb') as handler:
-         handler.write(img_data)
+        # get qoutes 
+        for qoute_block in qoute_blocks:
+            qoute = qoute_block.find("p").text
+            authorBlock = qoute_block.find("div", {"class": "field-type-taxonomy-term-reference"})
+            author = authorBlock.find("div", {"class": "field-item"}).find("a").text if authorBlock != None else "" 
+            parsedQoutes.insert(0, {
+                "qoute": qoute + (("\n© " + author) if author != "" else ""),
+                "author": author
+            })
+        
+        # send qoutes depending on time
+        for qouteObj in parsedQoutes:
+            for x in range(1, 6):
+                fileList = glob.glob("00000" + str(x) + ".*")
+                if len(fileList) == 1:
+                    os.remove(fileList[0])
 
-    data = {
-            '@type': 'sendMessage',
-            'chat_id': args.chat_id,
-            'input_message_content': {
-                '@type': 'inputMessagePhoto',
-                'photo': {
-                    "@type": "inputFileLocal",
-                    "path":  "test.jpg"
-                }
-            }
-        }
-    r = tg._send_data(data)
-    r.wait()
+            if qouteObj["author"] != "":
+                google_Crawler = GoogleImageCrawler(storage = {'root_dir': './'})
+                google_Crawler.crawl(keyword = qouteObj["author"] + " Нолан", max_num = 5)
 
-    
-    result = tg.send_message(
-        chat_id=args.chat_id,
-        text="test2",
-    )
-    time.sleep(2.4)
-    # if result.error:
-    #     print(f'send message error: {result.error_info}')
-    # else:
-    #     print(f'message has been sent: {result.update}')
+                imgN = random.randint(1,5)
+                if qouteObj["author"] == "Ра'с аль Гул":
+                    imgN = 2
+                elif qouteObj["author"] == "Люциус Фокс":
+                    imgN = 1
+                elif qouteObj["author"] == "Генри Дюкард (Henri Ducard)":
+                    imgN = 4
+                    
+
+                imageFile = glob.glob("00000" + str(imgN) + ".*")[0]
+                data = {
+                        '@type': 'sendMessage',
+                        'chat_id': args.chat_id,
+                        'input_message_content': {
+                            '@type': 'inputMessagePhoto',
+                            'photo': {
+                                "@type": "inputFileLocal",
+                                "path": imageFile
+                            }
+                        }
+                    }
+                r = tg._send_data(data)
+                r.wait()
+                time.sleep(3)
+
+            result = tg.send_message(
+                chat_id=args.chat_id,
+                text=qouteObj["qoute"]
+            )
+            result.wait()
+
+            time.sleep(args.time_range * 60 * 60)

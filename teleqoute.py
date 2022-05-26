@@ -63,7 +63,7 @@ if __name__ == '__main__':
             qoute = qoute_block.find("p").text
             authorBlock = qoute_block.find("div", {"class": "field-type-taxonomy-term-reference"})
             author = authorBlock.find("div", {"class": "field-item"}).find("a").text if authorBlock != None else "" 
-            parsedQoutes.insert(0, {
+            parsedQoutes.append({
                 "qoute": qoute + (("\n© " + author) if author != "" else ""),
                 "author": author
             })

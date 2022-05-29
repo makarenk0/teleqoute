@@ -67,8 +67,8 @@ def startQouter():
         "api_id": "3740832",
         "api_hash": "9508678034db2a627c98773c1029bf2d",
         "phone": "+380955389871",
-        "chat_id": "357030723",
-        "time_range": 30
+        "chat_id": "788665582",
+        "time_range": 12 * 60 * 60
     }
 
     tg = TelegramMyMod(
@@ -96,7 +96,7 @@ def startQouter():
         print(f'chats: {result.update}')
 
 
-    qouteURLs = ["https://citaty.info/movie/betmen-nachalo-batman-begins?page=2", "https://citaty.info/movie/betmen-nachalo-batman-begins", "https://citaty.info/movie/betmen-nachalo-batman-begins?page=1",
+    qouteURLs = ["https://citaty.info/movie/betmen-nachalo-batman-begins?page=1", "https://citaty.info/movie/betmen-nachalo-batman-begins", "https://citaty.info/movie/betmen-nachalo-batman-begins?page=2",
     "https://citaty.info/movie/temnyi-rycar-the-dark-knight", "https://citaty.info/movie/temnyi-rycar-the-dark-knight?page=1", "https://citaty.info/movie/temnyi-rycar-the-dark-knight?page=2", "https://citaty.info/movie/temnyi-rycar-the-dark-knight?page=3", 
     "https://citaty.info/movie/temnyi-rycar-vozrozhdenie-legendy-the-dark-knight-rises", "https://citaty.info/movie/temnyi-rycar-vozrozhdenie-legendy-the-dark-knight-rises?page=1", "https://citaty.info/movie/temnyi-rycar-vozrozhdenie-legendy-the-dark-knight-rises?page=2"]
     
@@ -130,7 +130,7 @@ def startQouter():
 
                 imgN = random.randint(1,5)
                 if qouteObj["author"] == "Ра'с аль Гул":
-                    imgN = 2
+                    imgN = 1
                 elif qouteObj["author"] == "Люциус Фокс":
                     imgN = 1
                 elif qouteObj["author"] == "Генри Дюкард (Henri Ducard)":

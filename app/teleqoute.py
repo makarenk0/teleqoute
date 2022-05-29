@@ -4,34 +4,83 @@ import time
 import os, glob, random
 from bs4 import BeautifulSoup
 from icrawler.builtin import GoogleImageCrawler
+from _thread import start_new_thread
 
+from typing import (
+    Optional
+)
+from telegram.utils import AsyncResult
 from telegram.client import Telegram
+from flask import Flask, request, jsonify
 
+customCode = ""
+
+class TelegramMyMod(Telegram):
+          
+    def _send_telegram_code(self, code: Optional[str] = None) -> AsyncResult:
+
+        for x in range(10):        
+            if customCode != "":
+                code = customCode
+                data = {'@type': 'checkAuthenticationCode', 'code': str(code)}
+                return self._send_data(data, result_id='updateAuthorizationState')
+            time.sleep(30)
+
+        code = input("Enter code:")
+        return self._send_data(data, result_id='updateAuthorizationState')
 """
 Sends a message to a chat
 Usage:
     python examples/send_message.py api_id api_hash phone chat_id text
 """
 
+app = Flask(__name__)
 
-if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('api_id', help='API id')  # https://my.telegram.org/apps
-    parser.add_argument('api_hash', help='API hash')
-    parser.add_argument('phone', help='Phone')
-    parser.add_argument('chat_id', help='Chat id', type=int)
-    parser.add_argument('time_range', help='Duration in hours', type=int)
-    args = parser.parse_args()
+@app.route('/')
+def hello():
+    return 'Hello, World!'
 
-    tg = Telegram(
-        api_id=args.api_id,
-        api_hash=args.api_hash,
-        phone=args.phone,
+@app.route('/setCode/<code>', methods=['GET'])
+def setCode(code):
+    global customCode 
+    customCode = code
+    return "Code was set!"
+
+@app.route('/control', methods=['POST'])
+def control():
+    content = request.json
+    if content['mode'] == "on":
+        start_new_thread(startQouter, ())
+
+    return jsonify({"mode": content['mode']})
+
+def startQouter():
+
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('api_id', help='API id')  # https://my.telegram.org/apps
+    # parser.add_argument('api_hash', help='API hash')
+    # parser.add_argument('phone', help='Phone')
+    # parser.add_argument('chat_id', help='Chat id', type=int)
+    # parser.add_argument('time_range', help='Duration in hours', type=int)
+    args = {
+        "api_id": "3740832",
+        "api_hash": "9508678034db2a627c98773c1029bf2d",
+        "phone": "+380955389871",
+        "chat_id": "357030723",
+        "time_range": 30
+    }
+
+    tg = TelegramMyMod(
+        api_id=args["api_id"],
+        api_hash=args["api_hash"],
+        phone=args["phone"],
         database_encryption_key='changeme1234',
     )
     # you must call login method before others
-    tg.login()
+    print("before login")
+    res = tg.login()
+    print(res)
 
     # if this is the first run, library needs to preload all chats
     # otherwise the message will not be sent
@@ -91,7 +140,7 @@ if __name__ == '__main__':
                 imageFile = glob.glob("00000" + str(imgN) + ".*")[0]
                 data = {
                         '@type': 'sendMessage',
-                        'chat_id': args.chat_id,
+                        'chat_id': args["chat_id"],
                         'input_message_content': {
                             '@type': 'inputMessagePhoto',
                             'photo': {
@@ -105,9 +154,9 @@ if __name__ == '__main__':
                 time.sleep(3)
 
             result = tg.send_message(
-                chat_id=args.chat_id,
+                chat_id=args["chat_id"],
                 text=qouteObj["qoute"]
             )
             result.wait()
 
-            time.sleep(args.time_range * 60 * 60)
+            time.sleep(args["time_range"])
